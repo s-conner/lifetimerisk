@@ -4,9 +4,11 @@ This project contains R code to model the lifetime risk using pseudo-observation
 
 pseudo_ltr_function.R
 ```
-This R code derives the lifetime risk at a given timepoint and derives pseudo-observations of the lifetime risk with the jackknife approach. Requires the Rcpp package to run pseudo_ltr_cpp.cpp code.
+This R code derives the lifetime risk at a given timepoint and derives pseudo-observations of the lifetime 
+risk with the jackknife approach. Requires the Rcpp package to run pseudo_ltr_cpp.cpp code.
 
-One could alternatively use the ETM package to derive the lifetime risk, and derive pseudo-observations from this quantity - results will be identical if the ETM package is used correctly.
+One could alternatively use the ETM package to derive the lifetime risk, and derive pseudo-observations 
+from this quantity - results will be identical if the ETM package is used correctly.
 ```
 
 pseudo_ltr_cpp.cpp
@@ -31,10 +33,12 @@ R code for modeling the pseudo-observations of the lifetime risk
 
 finegray_sas_sim.sas
 ```
-SAS code for fitting a Fine-Gray model for the cumulative incidence function and predicting the lifetime risk
+SAS code for fitting a Fine-Gray model for the cumulative incidence function and predicting 
+the lifetime risk
 ```
 
 flexparam_stata_sim.do
 ```
-Stata code for fitting a Royston-Parmar flexible parametric model for the cumulative incidence function and predicting the lifetime risk
+Stata code for fitting a Royston-Parmar flexible parametric model for the cumulative incidence 
+function and predicting the lifetime risk
 ```
