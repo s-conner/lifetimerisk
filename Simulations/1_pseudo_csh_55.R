@@ -2,8 +2,10 @@
 
 library(survival)
 library(geepack)
+library(Rcpp)
 
-# Load simulation parameters from shared computing cluster
+sourceCpp('//restricted//projectnb//conner-thesis//lifetimerisk//simulation//pseudo//cppcombine2.cpp')
+
 l <- as.numeric(Sys.getenv("SGE_TASK_ID")) #Identify the job task ID from the t variables in the shell, see below
 if (is.na(l)) l <- 1 
 
@@ -11,16 +13,58 @@ nsim <- 2000
 res_logit <- matrix(data=NA, nrow=nsim, ncol=18)
 res_cll <- matrix(data=NA, nrow=nsim, ncol=18)
 
+pseudo.lr <- function(dataset, entry, times, cause, eoi, tau=NULL){
+  data <- data.frame(entry=dataset[[entry]], times=dataset[[times]], cause=dataset[[cause]])
+  jk.lr <- rep(NA, nrow(data))
+  pseudo <- rep(NA, nrow(data))
+  n <- nrow(data)
+  data$jid <- 1:n
+  
+  if(max(data$times)<tau){print('Event times do not reach tau. Please choose a different value for tau.')
+  }else{
+    
+    if(is.null(tau)){
+      tau <- max(data$times[data$cause==1])
+    }
+    
+    event.ages <- data$times[data$cause!=0]
+    event.ages <- unique(event.ages[order(event.ages)])
+    
+    # Obtain lifetime risk in overall sample
+    overall.cif <- cif2(start=data$entry, stop=data$times, event=data$cause, eventAges=event.ages, failcode=eoi)
+    overall.lr <- overall.cif[which(event.ages==max(event.ages[event.ages<=tau]))]
+    
+    # Jackknife, my function
+    for(i in 1:n){
+      samp <- data[data$jid != i, ]
+      event.ages <- samp$times[samp$cause!=0]
+      event.ages <- unique(event.ages[order(event.ages)])
+
+      jk.cif <- cif2(start=samp$entry, stop=samp$times, event=samp$cause, eventAges=event.ages, failcode=eoi)
+      jk.lr[i] <- jk.cif[which(event.ages==max(event.ages[event.ages<=tau]))]
+      pseudo[i] <- n*overall.lr - (n-1)*jk.lr[i]
+    }
+    return(pseudo)
+  }
+}
+
 
 for(j in 1:nsim){
   
-  #### Step 1 - Load data ####
-  data <- read.csv(paste0("//restricted//projectnb//conner-thesis//lifetimerisk//sim1nov4//datacsh//data", l, "_", j, ".csv"), header=TRUE, sep=",")
+  #### Step 1 - Load Data ####
+  data <- read.csv(paste0("//restricted//projectnb//conner-thesis//lifetimerisk//simulation//data_csh//data", l, "_", j, ".csv"), header=TRUE, sep=",")
   
-  #### Step 2 - Derive pseudo-observations ####  
-  data$pseudo <- pseudo.lr(data, 'entry', 'times', 'cause', 1, 40) 
+  data$cause[data$times>40] <- 0
+  data$times[data$times>40] <- 40
   
-  #### Step 3 - Fit models ####  
+  # Shift data to be similar to FHS; lifetime risk at age 95
+  data$entry <- 55+round(data$entry, 4)
+  data$times <- 55+round(data$times, 4)
+  
+  #### Step 2 - Jackknife ####  
+  data$pseudo <- pseudo.lr(data, 'entry', 'times', 'cause', 1, 95) 
+  
+  #### Step 3 - Fit models
   cll.fit <- geese(pseudo ~ arm, 
                    data=data, id=id, jack = TRUE, scale.fix=TRUE, family=gaussian,
                    mean.link = "cloglog", corstr="independence")
@@ -38,7 +82,7 @@ for(j in 1:nsim){
                    san.pval = 2-2*pnorm(abs(logit.fit$beta/sqrt(diag(logit.fit$vbeta)))))
                   
 
-  #### Step 4 - Derive predicted LTR and SE for each group ####
+  #### Step 4 - Derive predicted LTR (instead of betas) ####
   ### Logit ###
   logit.beta0 <- unname(logit.fit$beta[1])
   logit.beta1 <- unname(logit.fit$beta[2])
@@ -119,7 +163,6 @@ colnames(res_cll) <- c('beta0', 'beta0_SE', 'beta0_pval', 'beta1', 'beta1_SE', '
                          'ltr0', 'ltr0_SE', 'ltr0_CIL', 'ltr0_CIU', 
                          'ltr1', 'ltr1_SE', 'ltr1_CIL', 'ltr1_CIU',
                          'ltrdiff', 'ltrdiff_SE', 'ltrdiff_CIL', 'ltrdiff_CIU')
-
-write.csv(res_logit, paste0("//restricted//projectnb//conner-thesis//lifetimerisk//sim1nov4//logitres//logitres", l, ".csv"), row.names=FALSE)
-write.csv(res_cll, paste0("//restricted//projectnb//conner-thesis//lifetimerisk//sim1nov4//cllres//cllres", l, ".csv"), row.names=FALSE)
+write.csv(res_logit, paste0("//restricted//projectnb//conner-thesis//lifetimerisk//simulation//pseudo//cshv2//logitres", l, ".csv"), row.names=FALSE)
+write.csv(res_cll, paste0("//restricted//projectnb//conner-thesis//lifetimerisk//simulation//pseudo//cshv2//cllres", l, ".csv"), row.names=FALSE)
 

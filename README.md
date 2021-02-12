@@ -1,6 +1,6 @@
 # Modeling the lifetime risk 
 
-This project contains R code to model the lifetime risk using pseudo-observations. We also share code used in our simulation study, including R code to simulate semi-competing risks data under cause-specific hazards and subdistribution hazards frameworks, SAS code to fit a Fine-Gray model for the cumulative incidence function and predict the lifetime risk, and Stata code to fit a flexible parametric model for the cumulative incidence function and predict the lifetime risk.
+This project contains R code to model the lifetime risk using pseudo-observations, and to predict lifetime risk with Fine-Gray and flexible parametric models of the subdistribtuion hazard with time-varying effects. We also share code to replicate our simulation study and illustrative example in the Framingham Heart Study (without data).
 
 ## Pseudo-observation lifetime risk R functions
 pseudo_ltr_function.R
@@ -33,11 +33,6 @@ pseudo_sim.R
 R code for modeling the pseudo-observations of the lifetime risk
 ```
 
-finegray_sas_sim.sas
-```
-SAS code for fitting a Fine-Gray model for the cumulative incidence function and predicting 
-the lifetime risk
-```
 
 
 ## Illustrative example
@@ -50,17 +45,12 @@ atrial fibrillation in the Framingham Heart Study
 
 finegray models for atrial fibrillation.sas
 ```
-SAS code for fitting Fine-Gray models for the cumulative incidence functions of atrial fibrillation and 
+R code for fitting Fine-Gray models for the cumulative incidence functions of atrial fibrillation and 
 death without atrial fibrillation in the Framingham Heart Study
 ```
 
 flexible parametric models for atrial fibrillation.do
 ```
-STATA code for fitting fleixble parametric models for the cumulative incidence functions of atrial  
+R code for fitting fleixble parametric models for the cumulative incidence functions of atrial  
 fibrillation and death without atrial fibrillation in the Framingham Heart Study
-```
-flexparam_stata_sim.do
-```
-Stata code for fitting a Royston-Parmar flexible parametric model for the cumulative incidence 
-function and predicting the lifetime risk
 ```
