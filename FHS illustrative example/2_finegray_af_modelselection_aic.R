@@ -1,7 +1,8 @@
 ### Fine-Gray models for FHS - Lifetime risk of AF
 ### Mstate package to prepare data, no errors in R v. 4.0.2
 ### Include interactions with log(time), determine using AIC
-### Updated analyses 1/12/2021
+### Updated analyses for revision 7/15/2021
+
 
 library(survival)
 library(mstate)
@@ -28,7 +29,7 @@ fit.fg <- coxph(Surv(Tstart, Tstop, ev1) ~ male + entry_hgt + entry_wgt + entry_
 summary(fit.fg)
 
 # AIC
-2*length(coef(fit.fg)) - 2*fit.fg$loglik[2]
+full.aic0 <- 2*length(coef(fit.fg)) - 2*fit.fg$loglik[2]
 
 
 # ----- Round 1: add 1 log(time) interaction at a time ----- 
@@ -49,7 +50,9 @@ for(i in vars){
 }
 
 nonph1 <- data.frame(vars, pval=round(nonph.pval1,6), aic=nonph.aic1)
+nonph1$delta <- full.aic0 - nonph1$aic
 nonph1[order(nonph1$aic),]
+full.aic1 <- min(nonph1$aic)
 
 
 # ----- Round 2: tt(entry_wgt) + add 1 log(time) interaction at a time 
@@ -71,7 +74,10 @@ for(i in vars2){
 }
 
 nonph2 <- data.frame(vars2, pval=round(nonph.pval2,6), aic=nonph.aic2)
+nonph2$delta <- full.aic1 - nonph2$aic
 nonph2[order(nonph2$aic),]
+full.aic2 <- min(nonph2$aic)
+
 
 
 # ----- Round 3: tt(entry_wgt) + tt(entry_pmi) + add 1 log(time) interaction at a time 
@@ -93,7 +99,9 @@ for(i in vars3){
 }
 
 nonph3 <- data.frame(vars3, pval=round(nonph.pval3,6), aic=nonph.aic3)
+nonph3$delta <- full.aic2 - nonph3$aic
 nonph3[order(nonph3$aic),]
+full.aic3 <- min(nonph3$aic)
 
 
 
@@ -117,8 +125,12 @@ for(i in vars4){
 }
 
 nonph4 <- data.frame(vars4, pval=round(nonph.pval4,6), aic=nonph.aic4)
+nonph4$delta <- full.aic3 - nonph4$aic
 nonph4[order(nonph4$aic),]
+full.aic4 <- min(nonph4$aic)
 
+
+# Note: stop here using new AIC criterion delta>4
 
 
 # ----- Round 5:  tt(entry_wgt) + tt(entry_pmi) + tt(entry_smk) + tt(entry_hgt) + add 1 log(time) interaction at a time 
@@ -141,6 +153,7 @@ for(i in vars5){
 }
 
 nonph5 <- data.frame(vars5, pval=round(nonph.pval5,6), aic=nonph.aic5)
+nonph5$delta <- full.aic4 - nonph5$aic
 nonph5[order(nonph5$aic),]
 
 
@@ -167,5 +180,37 @@ nonph6 <- data.frame(vars6, pval=round(nonph.pval6,6), aic=nonph.aic6)
 nonph6[order(nonph6$aic),]
 
 # AIC increased, proceed with Round 5 model!
+# Using AIC reduction criteria, i.e. delta decrease by 4 or 10, proceed with Round 3 model.
+
+
+# ----- Check interactions with sex ----- 
+
+
+
+
+# ----- Round 1: tt(entry_wgt) + tt(entry_pmi) + tt(entry_smk) + add 1 covariate-sex interaction at a time 
+
+int1 <- c('entry_hgt', 'entry_wgt', 'entry_sbp', 'entry_dbp', 'entry_hrx', 
+          'entry_smk', 'entry_alc_elev', 'entry_diab', 'entry_pchf', 'entry_pmi')
+n.vars.int1 <- length(int1)
+int.pval1 <- rep(NA, n.vars.int1)
+int.aic1 <- rep(NA, n.vars.int1)
+j <- 0
+
+for(i in int1){
+  j <- j+1
+  fit.fg.int <- coxph(Surv(Tstart, Tstop, ev1) ~ male + entry_hgt + entry_wgt + entry_sbp + entry_dbp + entry_hrx + 
+                        entry_smk + entry_alc_elev + entry_diab + entry_pchf + entry_pmi + 
+                        tt(entry_wgt) + tt(entry_pmi) + tt(entry_smk) + male:get(i), 
+                      tt = function(x, t, ...) x * log(t-55),
+                      weight=weight_ltrc, data=af.fg)
+  int.pval1[j] <- summary(fit.fg.int)$coef[n.vars4+1,5]
+  int.aic1[j] <- 2*length(coef(fit.fg.int)) - 2*fit.fg.int$loglik[2]
+}
+
+intres1 <- data.frame(int1, pval=round(int.pval1,6), aic=int.aic1)
+intres1$delta <- full.aic3 - intres1$aic
+intres1[order(intres1$aic),]
+full.aic4 <- min(intres1$aic)
 
 

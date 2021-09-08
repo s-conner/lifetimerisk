@@ -5,34 +5,42 @@
 # ----- AF lifetime risks ----- 
 
 pseudo.ltr <- read.csv('results//pseudologit_af_pred.csv')
-fg.ltr <- read.csv('results//finegray_af_diffltr.csv')
-fg.ltr.ci <- read.csv('results//finegray_af_diffltr_ci.csv')
-flex.ltr <- read.csv('results//flex_af_diffltr_se.csv')
+fg.ltr <- read.csv('results//finegray_af_diffltr_ci_revision.csv')
+flex.ltr <- read.csv('results//flex_af_diffltr_revision.csv')
+flex.ltr.bic <- read.csv('results//flex_af_diffltr_revision_bic.csv')
 
 pseudo.ltr <- pseudo.ltr*100
 pseudo.fmt <- cbind(ltrdiff=paste0(sprintf('%.2f', pseudo.ltr[,1]), " (", sprintf('%.2f', pseudo.ltr[,2]), ", ", sprintf('%.2f', pseudo.ltr[,3]), ")"))
 
-fg.ltr$ltrdiff <- fg.ltr$ltrdiff*100
-fg.ltr.ci <- fg.ltr.ci*100
-fg.fmt <- cbind(fg.ltr$var, ltrdiff=paste0(sprintf('%.2f', fg.ltr$ltrdiff), " (", sprintf('%.2f', fg.ltr.ci[,1]), ", ", sprintf('%.2f', fg.ltr.ci[,2]), ")"))
-fg.fmt.sort <- fg.fmt[c(1,8:11,2:7),]
+fg.ltr[,2:4] <- fg.ltr[,2:4]*100
+fg.fmt <- cbind(fg.ltr$var, ltrdiff=paste0(sprintf('%.2f', fg.ltr$ltrdiff), " (", sprintf('%.2f', fg.ltr$cil), ", ", sprintf('%.2f', fg.ltr$ciu), ")"))
 
-allpred <- cbind(fg.fmt.sort[,1], pseudo.fmt[2:12,], fg.fmt.sort[,2], flex.ltr$ltrdiff)
-colnames(allpred) <- c('Risk factor', 'Pseudo-observation', 'Fine-Gray', 'Flexible parametric')
-write.csv(allpred, 'results//all_af_diffltr.csv', row.names=FALSE)
+allpred <- cbind(fg.ltr[,1], pseudo.fmt[2:12,], fg.fmt[,2], flex.ltr[2], flex.ltr.bic[2])
+colnames(allpred) <- c('Risk factor', 'Pseudo-observation', 'Fine-Gray', 'Flexible parametric AIC', 'Flexible parametric BIC')
+write.csv(allpred, 'results//all_af_diffltr_revision_bic.csv', row.names=FALSE)
 
 
 # ----- AF models ----- 
 
 pseudo.mod <- read.csv('results//pseudologit_af_mod.csv')
-fg.mod <- read.csv('results//finegray_af_mod.csv')
-flex.mod <- read.csv('results//flex_af_mod.csv')
+fg.mod <- read.csv('results//finegray_af_mod_revision.csv')
+flex.mod <- read.csv('results//flex_af_mod_revision.csv')
+
+# Re order
+fg.mod <- fg.mod[c(1:3,12,4:7,14,8:11,13),]
+flex.mod <-  flex.mod[c(1,12,13,2,16,3,14,4:9,15,10,11),]
 
 # Pad with NAs, since models have different parameters
-allmod <- cbind(fg.mod[,1], 
-                c(pseudo.mod$ltrdiff, NA, NA, NA, NA, NA),
-                fg.mod[,2], 
-                c(flex.mod[,2], NA, NA, NA, NA))
+blank <- data.frame(matrix('',nrow=5,ncol=2))
+colnames(blank) <- colnames(pseudo.mod)
+pseudo.mod <- rbind(pseudo.mod, blank)
+
+blank <- data.frame(matrix('',nrow=2,ncol=2))
+colnames(blank) <- colnames(fg.mod)
+fg.mod <- rbind(fg.mod, blank)
+fg.mod <- fg.mod[c(1,15,16,2:14),]
+
+allmod <- cbind(pseudo.mod, fg.mod, flex.mod)
 
 write.csv(allmod[c(1,2,15,3,12,4:7,14,8,9,16,10,11,13),], 'results//all_af_mod.csv', row.names=FALSE)
 

@@ -1,6 +1,6 @@
 ### Fine-Gray models for FHS - Lifetime risk of AF
 ### Bootstrap CI (use SCC to reduce computation)
-### Updated analyses 1/12/2021
+### Updated analyses for revision 7/16/2021
 
 library(survival)
 library(mstate)
@@ -61,13 +61,11 @@ for(i in start:end){
   boot.dat.long$entry_wgt.logt <- boot.dat.long$entry_wgt * boot.dat.long$logt
   boot.dat.long$entry_pmi.logt <- boot.dat.long$entry_pmi * boot.dat.long$logt
   boot.dat.long$entry_smk.logt <- boot.dat.long$entry_smk * boot.dat.long$logt
-  boot.dat.long$entry_hgt.logt <- boot.dat.long$entry_hgt * boot.dat.long$logt
-  boot.dat.long$entry_diab.logt <- boot.dat.long$entry_diab * boot.dat.long$logt
   
   # Fit fine-gray model with long data
   tryCatch({boot.fg <- coxph(Surv(Tstart, Tstop, ev1) ~ male + entry_hgt + entry_wgt + entry_sbp + entry_dbp + entry_hrx + 
                         entry_smk + entry_alc_elev + entry_diab + entry_pchf + entry_pmi + 
-                        entry_wgt.logt + entry_pmi.logt + entry_smk.logt + entry_hgt.logt + entry_diab.logt,
+                        entry_wgt.logt + entry_pmi.logt + entry_smk.logt,
                       weight=weight_ltrc, data=boot.dat.long, control=coxph.control(timefix = FALSE))
   }, error = function(e) {})
   
@@ -86,8 +84,6 @@ for(i in start:end){
     preddat$entry_wgt.logt <- preddat$entry_wgt * preddat$logt
     preddat$entry_pmi.logt <- preddat$entry_pmi * preddat$logt
     preddat$entry_smk.logt <- preddat$entry_smk * preddat$logt
-    preddat$entry_hgt.logt <- preddat$entry_hgt * preddat$logt
-    preddat$entry_diab.logt <- preddat$entry_diab * preddat$logt
     
     # Predict for binary variables - 1 - 0
     l <- 0
@@ -146,8 +142,8 @@ for(i in start:end){
 # ----- Export ------
 
 
-write.csv(boot.fg.ltr1, paste0("bootci_af//fg_ltr1_ci_", a, ".csv"), row.names=FALSE)
-write.csv(boot.fg.ltr0, paste0("bootci_af//fg_ltr0_ci_", a, ".csv"), row.names=FALSE)
-write.csv(boot.fg.ltr.diff, paste0("bootci_af//fg_ltrdiff_ci_", a, ".csv"), row.names=FALSE)
+write.csv(boot.fg.ltr1, paste0("bootci_af_revision//fg_ltr1_ci_", a, ".csv"), row.names=FALSE)
+write.csv(boot.fg.ltr0, paste0("bootci_af_revision//fg_ltr0_ci_", a, ".csv"), row.names=FALSE)
+write.csv(boot.fg.ltr.diff, paste0("bootci_af_revision//fg_ltrdiff_ci_", a, ".csv"), row.names=FALSE)
 
 
